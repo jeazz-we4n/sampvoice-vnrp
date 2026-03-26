@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - 'master'
-      - 'main' # Thêm main cho chắc ăn
+      - 'main'
   pull_request:
     branches:
       - '*'
@@ -14,43 +14,46 @@ on:
 
 jobs:
   build-windows-release:
-    runs-on: windows-latest # ĐÃ SỬA: Dùng máy Windows xịn nhất
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4 # Cập nhật version action
+      - uses: actions/checkout@v4
         with:
           clean: true
           submodules: recursive
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v5 # Cập nhật version action
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
-      - name: Install latest conan
+      - name: Install Conan 1.x
+        # ĐÃ SỬA: Ép cài bản Conan 1.x để không bị lỗi tương thích với source cũ
         run: |
           python -m pip install --upgrade pip
-          pip install conan
+          pip install "conan<2.0"
 
       - name: Generate build files
         run: |
           mkdir build
           cd build
-          # ĐÃ SỬA: Bỏ cái Visual Studio 2019 đi, để CMake tự động nhận bản mới nhất của máy ảo
           cmake -DCMAKE_BUILD_TYPE=Release .. -A Win32
+          
+      - name: Build Project
+        run: |
+          cd build
           cmake --build . --config Release
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4 # Cập nhật version action
+        uses: actions/upload-artifact@v4
         with:
           name: sampvoice-win-release
           path: |
             build/client/Release/*.asi 
             build/server/Release/*.dll
-            # ĐÃ SỬA: Lấy MỌI file .asi (cho client) và .dll (cho server)
 
   build-linux-release:
-    runs-on: ubuntu-latest # ĐÃ SỬA: Dùng máy Linux mới nhất, thoát kiếp bị treo
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -66,15 +69,16 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install latest conan
+      - name: Install Conan 1.x
+        # ĐÃ SỬA: Ép cài bản Conan 1.x cho Linux luôn
         run: |
           python -m pip install --upgrade pip
-          pip install conan
+          pip install "conan<2.0"
 
       - name: Generate build files
         run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32
 
-      - name: Build
+      - name: Build Project
         run: |
           cd build
           cmake --build . --config Release
@@ -83,4 +87,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sampvoice-linux-release
-          path: build/server/*.so # File Linux thì chỉ có server plugin thôi
+          path: build/server/*.so
