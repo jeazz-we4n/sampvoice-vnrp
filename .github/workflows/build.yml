@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - 'master'
+      - 'main' # Thêm main cho chắc ăn
   pull_request:
     branches:
       - '*'
@@ -13,20 +14,18 @@ on:
 
 jobs:
   build-windows-release:
-    runs-on: windows-2019
+    runs-on: windows-latest # ĐÃ SỬA: Dùng máy Windows xịn nhất
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4 # Cập nhật version action
         with:
           clean: true
           submodules: recursive
-          token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v2
-
-      - name: Install CMake
-        uses: lukka/get-cmake@v.3.23.2
+        uses: actions/setup-python@v5 # Cập nhật version action
+        with:
+          python-version: '3.x'
 
       - name: Install latest conan
         run: |
@@ -37,33 +36,35 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release .. -G "Visual Studio 16 2019" -A Win32
+          # ĐÃ SỬA: Bỏ cái Visual Studio 2019 đi, để CMake tự động nhận bản mới nhất của máy ảo
+          cmake -DCMAKE_BUILD_TYPE=Release .. -A Win32
           cmake --build . --config Release
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # Cập nhật version action
         with:
           name: sampvoice-win-release
-          path: build/server/Release/sampvoice.dll
+          path: |
+            build/client/Release/*.asi 
+            build/server/Release/*.dll
+            # ĐÃ SỬA: Lấy MỌI file .asi (cho client) và .dll (cho server)
 
   build-linux-release:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest # ĐÃ SỬA: Dùng máy Linux mới nhất, thoát kiếp bị treo
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           clean: true
           submodules: recursive
-          token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
 
       - name: Install packages
-        run: sudo apt-get install g++-multilib
+        run: sudo apt-get update && sudo apt-get install g++-multilib -y
 
       - name: Setup Python
-        uses: actions/setup-python@v2
-
-      - name: Install CMake
-        uses: lukka/get-cmake@v.3.23.2
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
 
       - name: Install latest conan
         run: |
@@ -79,7 +80,7 @@ jobs:
           cmake --build . --config Release
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sampvoice-linux-release
-          path: build/server/sampvoice.so
+          path: build/server/*.so # File Linux thì chỉ có server plugin thôi
