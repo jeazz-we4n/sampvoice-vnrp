@@ -23,6 +23,7 @@
 #include "PointStream.h"
 #include "Effect.h"
 
+
 class PawnInterface {
 public:
 
@@ -346,6 +347,7 @@ private:
 	static cell AMX_NATIVE_CALL n_SvEffectAttachStream(AMX* amx, cell* params);
 	static cell AMX_NATIVE_CALL n_SvEffectDetachStream(AMX* amx, cell* params);
 	static cell AMX_NATIVE_CALL n_SvEffectDelete(AMX* amx, cell* params);
+	static cell AMX_NATIVE_CALL n_SvSetStreamRadioEffect(AMX* amx, cell* params);
 
 private:
 
