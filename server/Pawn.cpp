@@ -13,6 +13,16 @@
 #include <util/logger.h>
 #include <util/memory.hpp>
 
+// Thêm vào đầu file Pawn.cpp
+#define SV_CONTROL_STREAM_SET_RADIO 200
+
+#pragma pack(push, 1)
+struct RadioEffectPacket {
+    DWORD stream;
+    bool enable;
+};
+#pragma pack(pop)
+
 bool Pawn::Init(PawnInterfacePtr pInterface) noexcept
 {
 	return (Pawn::pInterface = std::move(pInterface)) != nullptr;
@@ -35,74 +45,77 @@ void Pawn::Free() noexcept
 
 void Pawn::RegisterScript(AMX* const amx)
 {
-	if (Pawn::pInterface == nullptr) return;
+    if (Pawn::pInterface == nullptr) return;
 
-	const AMX_NATIVE_INFO nativesList[] =
-	{
+    const AMX_NATIVE_INFO nativesList[] =
+    {
 #define DefineNativeFunction(function) { #function, &Pawn::n_##function }
 
-		DefineNativeFunction(SvDebug),
-		DefineNativeFunction(SvInit),
-		DefineNativeFunction(SvGetVersion),
+        DefineNativeFunction(SvDebug),
+        DefineNativeFunction(SvInit),
+        DefineNativeFunction(SvGetVersion),
 
-		DefineNativeFunction(SvHasMicro),
-		DefineNativeFunction(SvStartRecord),
-		DefineNativeFunction(SvStopRecord),
-		DefineNativeFunction(SvAddKey),
-		DefineNativeFunction(SvHasKey),
-		DefineNativeFunction(SvRemoveKey),
-		DefineNativeFunction(SvRemoveAllKeys),
-		DefineNativeFunction(SvMutePlayerStatus),
-		DefineNativeFunction(SvMutePlayerEnable),
-		DefineNativeFunction(SvMutePlayerDisable),
+        DefineNativeFunction(SvHasMicro),
+        DefineNativeFunction(SvStartRecord),
+        DefineNativeFunction(SvStopRecord),
+        DefineNativeFunction(SvAddKey),
+        DefineNativeFunction(SvHasKey),
+        DefineNativeFunction(SvRemoveKey),
+        DefineNativeFunction(SvRemoveAllKeys),
+        DefineNativeFunction(SvMutePlayerStatus),
+        DefineNativeFunction(SvMutePlayerEnable),
+        DefineNativeFunction(SvMutePlayerDisable),
 
-		DefineNativeFunction(SvCreateGStream),
-		DefineNativeFunction(SvCreateSLStreamAtPoint),
-		DefineNativeFunction(SvCreateSLStreamAtVehicle),
-		DefineNativeFunction(SvCreateSLStreamAtPlayer),
-		DefineNativeFunction(SvCreateSLStreamAtObject),
-		DefineNativeFunction(SvCreateDLStreamAtPoint),
-		DefineNativeFunction(SvCreateDLStreamAtVehicle),
-		DefineNativeFunction(SvCreateDLStreamAtPlayer),
-		DefineNativeFunction(SvCreateDLStreamAtObject),
-		DefineNativeFunction(SvUpdateDistanceForLStream),
-		DefineNativeFunction(SvUpdatePositionForLPStream),
-		DefineNativeFunction(SvAttachListenerToStream),
-		DefineNativeFunction(SvHasListenerInStream),
-		DefineNativeFunction(SvDetachListenerFromStream),
-		DefineNativeFunction(SvDetachAllListenersFromStream),
-		DefineNativeFunction(SvAttachSpeakerToStream),
-		DefineNativeFunction(SvHasSpeakerInStream),
-		DefineNativeFunction(SvDetachSpeakerFromStream),
-		DefineNativeFunction(SvDetachAllSpeakersFromStream),
-		DefineNativeFunction(SvStreamParameterSet),
-		DefineNativeFunction(SvStreamParameterReset),
-		DefineNativeFunction(SvStreamParameterHas),
-		DefineNativeFunction(SvStreamParameterGet),
-		DefineNativeFunction(SvStreamParameterSlideFromTo),
-		DefineNativeFunction(SvStreamParameterSlideTo),
-		DefineNativeFunction(SvStreamParameterSlide),
-		DefineNativeFunction(SvDeleteStream),
+        DefineNativeFunction(SvCreateGStream),
+        DefineNativeFunction(SvCreateSLStreamAtPoint),
+        DefineNativeFunction(SvCreateSLStreamAtVehicle),
+        DefineNativeFunction(SvCreateSLStreamAtPlayer),
+        DefineNativeFunction(SvCreateSLStreamAtObject),
+        DefineNativeFunction(SvCreateDLStreamAtPoint),
+        DefineNativeFunction(SvCreateDLStreamAtVehicle),
+        DefineNativeFunction(SvCreateDLStreamAtPlayer),
+        DefineNativeFunction(SvCreateDLStreamAtObject),
+        DefineNativeFunction(SvUpdateDistanceForLStream),
+        DefineNativeFunction(SvUpdatePositionForLPStream),
+        DefineNativeFunction(SvAttachListenerToStream),
+        DefineNativeFunction(SvHasListenerInStream),
+        DefineNativeFunction(SvDetachListenerFromStream),
+        DefineNativeFunction(SvDetachAllListenersFromStream),
+        DefineNativeFunction(SvAttachSpeakerToStream),
+        DefineNativeFunction(SvHasSpeakerInStream),
+        DefineNativeFunction(SvDetachSpeakerFromStream),
+        DefineNativeFunction(SvDetachAllSpeakersFromStream),
+        DefineNativeFunction(SvStreamParameterSet),
+        DefineNativeFunction(SvStreamParameterReset),
+        DefineNativeFunction(SvStreamParameterHas),
+        DefineNativeFunction(SvStreamParameterGet),
+        DefineNativeFunction(SvStreamParameterSlideFromTo),
+        DefineNativeFunction(SvStreamParameterSlideTo),
+        DefineNativeFunction(SvStreamParameterSlide),
+        DefineNativeFunction(SvDeleteStream),
 
-		DefineNativeFunction(SvEffectCreateChorus),
-		DefineNativeFunction(SvEffectCreateCompressor),
-		DefineNativeFunction(SvEffectCreateDistortion),
-		DefineNativeFunction(SvEffectCreateEcho),
-		DefineNativeFunction(SvEffectCreateFlanger),
-		DefineNativeFunction(SvEffectCreateGargle),
-		DefineNativeFunction(SvEffectCreateI3dl2reverb),
-		DefineNativeFunction(SvEffectCreateParameq),
-		DefineNativeFunction(SvEffectCreateReverb),
-		DefineNativeFunction(SvEffectAttachStream),
-		DefineNativeFunction(SvEffectDetachStream),
-		DefineNativeFunction(SvEffectDelete)
+        DefineNativeFunction(SvEffectCreateChorus),
+        DefineNativeFunction(SvEffectCreateCompressor),
+        DefineNativeFunction(SvEffectCreateDistortion),
+        DefineNativeFunction(SvEffectCreateEcho),
+        DefineNativeFunction(SvEffectCreateFlanger),
+        DefineNativeFunction(SvEffectCreateGargle),
+        DefineNativeFunction(SvEffectCreateI3dl2reverb),
+        DefineNativeFunction(SvEffectCreateParameq),
+        DefineNativeFunction(SvEffectCreateReverb),
+        DefineNativeFunction(SvEffectAttachStream),
+        DefineNativeFunction(SvEffectDetachStream),
+        DefineNativeFunction(SvEffectDelete),         // <-- Nhớ có dấu phẩy ở đây
+
+        // --- HÀM BỘ ĐÀM CỦA CHÚNG TA ---
+        DefineNativeFunction(SvSetStreamRadioEffect)
 
 #undef  DefineNativeFunction
-	};
+    };
 
-	amx_Register(amx, nativesList, SizeOfArray(nativesList));
+    amx_Register(amx, nativesList, SizeOfArray(nativesList));
 
-	Pawn::scripts.emplace_back(amx);
+    Pawn::scripts.emplace_back(amx);
 }
 
 void Pawn::OnPlayerActivationKeyPressForAll(const uint16_t playerid, const uint8_t keyid) noexcept
@@ -372,6 +385,31 @@ cell AMX_NATIVE_CALL Pawn::n_SvCreateGStream(AMX* const amx, cell* const params)
 	);
 
 	return reinterpret_cast<cell>(result);
+}
+
+// Hàm xử lý khi scripter gọi SvSetStreamRadioEffect trong PAWN
+cell AMX_NATIVE_CALL Pawn::SvSetStreamRadioEffect(AMX* amx, cell* params)
+{
+    // params[1] = (SV_STREAM) con trỏ stream
+    // params[2] = (bool) trạng thái bật/tắt
+
+    // Nếu truyền vào ID stream rỗng (NULL) thì bỏ qua
+    if (params[1] == NULL) return 0;
+
+    // Trong SampVoice, ID stream truyền từ PAWN lên thực chất là địa chỉ bộ nhớ (pointer)
+    auto stream = reinterpret_cast<Stream*>(params[1]);
+    bool enable = static_cast<bool>(params[2]);
+
+    // Đóng gói dữ liệu chuẩn bị gửi đi
+    RadioEffectPacket packet;
+    packet.stream = static_cast<DWORD>(params[1]); // ID luồng gửi cho client khớp với ID này
+    packet.enable = enable;
+
+    // Yêu cầu Stream gửi gói tin Control xuống tất cả các Client đang kết nối/lắng nghe
+    // (Phương thức SendControlPacket thường có sẵn trong class Stream của tác giả CyberMor)
+    stream->SendControlPacket(SV_CONTROL_STREAM_SET_RADIO, &packet, sizeof(packet));
+
+    return 1;
 }
 
 cell AMX_NATIVE_CALL Pawn::n_SvCreateSLStreamAtPoint(AMX* const amx, cell* const params)
