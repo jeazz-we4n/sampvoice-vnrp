@@ -46,11 +46,27 @@ jobs:
           echo "file(GLOB_RECURSE FX_FILES \"*.fx\" \"*.hlsl\")" >> client/CMakeLists.txt
           echo "set_source_files_properties(\${FX_FILES} PROPERTIES VS_TOOL_OVERRIDE \"None\" HEADER_FILE_ONLY TRUE)" >> client/CMakeLists.txt
 
+      # --- BƯỚC PHẪU THUẬT: Tự động sửa lỗi dòng 133 trong mã nguồn C++ ---
+      - name: Patch C++ Narrowing Conversion Error
+        shell: python
+        run: |
+          import re
+          file_path = 'client/Network.cpp'
+          with open(file_path, 'r', encoding='utf-8') as f:
+              lines = f.readlines()
+          
+          # Dòng 133 (index 132). Tìm phần tử đầu tiên trong dấu {} và ép kiểu (int) cho nó.
+          lines[132] = re.sub(r'\{\s*([a-zA-Z0-9_]+)', r'{ (int)\1', lines[132])
+          
+          with open(file_path, 'w', encoding='utf-8') as f:
+              f.writelines(lines)
+
       - name: Generate build files
+        # --- ĐÃ XÓA cờ /wd lỗi, THÊM cờ /EHsc để hết sạch warning vàng ---
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release -DDXSDK_DIR="$env:DXSDK_DIR" -DBUILD_CLIENT=ON -DCMAKE_CXX_FLAGS="/wd2398 /wd4805 /wd4838 /wd4227" .. -A Win32
+          cmake -DCMAKE_BUILD_TYPE=Release -DDXSDK_DIR="$env:DXSDK_DIR" -DBUILD_CLIENT=ON -DCMAKE_CXX_FLAGS="/EHsc" .. -A Win32
           
       - name: Build Project
         run: |
