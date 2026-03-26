@@ -46,23 +46,32 @@ jobs:
           echo "file(GLOB_RECURSE FX_FILES \"*.fx\" \"*.hlsl\")" >> client/CMakeLists.txt
           echo "set_source_files_properties(\${FX_FILES} PROPERTIES VS_TOOL_OVERRIDE \"None\" HEADER_FILE_ONLY TRUE)" >> client/CMakeLists.txt
 
-      # --- BƯỚC PHẪU THUẬT: Tự động sửa lỗi dòng 133 trong mã nguồn C++ ---
+      # --- BƯỚC PHẪU THUẬT V2: Bắt đúng bệnh sizeof() ---
       - name: Patch C++ Narrowing Conversion Error
         shell: python
         run: |
           import re
           file_path = 'client/Network.cpp'
           with open(file_path, 'r', encoding='utf-8') as f:
-              lines = f.readlines()
+              content = f.read()
+              lines = content.split('\n')
           
-          # Dòng 133 (index 132). Tìm phần tử đầu tiên trong dấu {} và ép kiểu (int) cho nó.
-          lines[132] = re.sub(r'\{\s*([a-zA-Z0-9_]+)', r'{ (int)\1', lines[132])
+          print("TRƯỚC KHI SỬA (Dòng 133):", lines[132])
           
+          # Đè toàn bộ sizeof thành (int)sizeof
+          content = content.replace('sizeof(', '(int)sizeof(')
+          
+          # Đề phòng nó dùng .size() thay vì sizeof
+          lines_new = content.split('\n')
+          lines_new[132] = re.sub(r',\s*([a-zA-Z0-9_]+)', r', (int)\1', lines_new[132])
+          content = '\n'.join(lines_new)
+          
+          print("SAU KHI SỬA (Dòng 133):", lines_new[132])
+
           with open(file_path, 'w', encoding='utf-8') as f:
-              f.writelines(lines)
+              f.write(content)
 
       - name: Generate build files
-        # --- ĐÃ XÓA cờ /wd lỗi, THÊM cờ /EHsc để hết sạch warning vàng ---
         run: |
           mkdir build
           cd build
