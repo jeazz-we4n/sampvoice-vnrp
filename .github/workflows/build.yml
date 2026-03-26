@@ -1,4 +1,4 @@
-name: Build Client Only
+name: Build Full VNRP
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
       - '*'
 
 jobs:
-  build-windows-client:
+  build-windows-full:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,14 +33,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install "conan<2.0"
 
-      # --- BƯỚC ÉP XUNG: CHÍCH THẲNG DIRECTX VÀO TRÌNH BIÊN DỊCH WINDOWS ---
-      - name: Inject DirectX SDK strictly to Windows Compiler
-        shell: cmd
+      - name: Setup DirectX SDK
         run: |
           git clone https://github.com/testing-laboratory/DirectX-SDK-June2010.git dxsdk
-          echo DXSDK_DIR=%GITHUB_WORKSPACE%\dxsdk\>> %GITHUB_ENV%
-          echo INCLUDE=%GITHUB_WORKSPACE%\dxsdk\Include;%INCLUDE%>> %GITHUB_ENV%
-          echo LIB=%GITHUB_WORKSPACE%\dxsdk\Lib\x86;%LIB%>> %GITHUB_ENV%
+          $DxPath = Join-Path (Get-Location) "dxsdk"
+          echo "DXSDK_DIR=$DxPath\" >> $env:GITHUB_ENV
+
+      # --- BƯỚC KHÓA MÕM VS2022: Cấm compile file .fx (Shader) ---
+      - name: Fix FXC Shader Compiler Error
+        shell: bash
+        run: |
+          echo "" >> client/CMakeLists.txt
+          echo "file(GLOB_RECURSE FX_FILES \"*.fx\" \"*.hlsl\")" >> client/CMakeLists.txt
+          echo "set_source_files_properties(\${FX_FILES} PROPERTIES VS_TOOL_OVERRIDE \"None\" HEADER_FILE_ONLY TRUE)" >> client/CMakeLists.txt
 
       - name: Generate build files
         run: |
@@ -53,9 +58,10 @@ jobs:
           cd build
           cmake --build . --config Release
 
-      # --- ÉP NÓ CHỈ TRẢ VỀ FILE TRONG THƯ MỤC CLIENT ---
-      - name: Upload Client Artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: sampvoice-client-asi
-          path: build/client/Release/*.dll
+          name: sampvoice-full-release
+          path: |
+            build/**/*.dll
+            build/**/*.asi
