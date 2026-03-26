@@ -23,16 +23,6 @@
 #include "PointStream.h"
 #include "Effect.h"
 
-// Thêm vào đầu file Pawn.cpp
-#define SV_CONTROL_STREAM_SET_RADIO 200
-
-#pragma pack(push, 1)
-struct RadioEffectPacket {
-    DWORD stream;
-    bool enable;
-};
-#pragma pack(pop)
-
 class PawnInterface {
 public:
 
