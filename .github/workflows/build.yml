@@ -39,7 +39,6 @@ jobs:
           $DxPath = Join-Path (Get-Location) "dxsdk"
           echo "DXSDK_DIR=$DxPath\" >> $env:GITHUB_ENV
 
-      # --- BƯỚC KHÓA MÕM VS2022: Cấm compile file .fx (Shader) ---
       - name: Fix FXC Shader Compiler Error
         shell: bash
         run: |
@@ -51,7 +50,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release -DDXSDK_DIR="$env:DXSDK_DIR" -DBUILD_CLIENT=ON .. -A Win32
+          cmake -DCMAKE_BUILD_TYPE=Release -DDXSDK_DIR="$env:DXSDK_DIR" -DBUILD_CLIENT=ON -DCMAKE_CXX_FLAGS="/wd2398 /wd4805 /wd4838 /wd4227" .. -A Win32
           
       - name: Build Project
         run: |
