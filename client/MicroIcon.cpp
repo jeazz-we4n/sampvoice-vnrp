@@ -143,6 +143,7 @@ void MicroIcon::SwitchToMutedIcon() noexcept
 
 void MicroIcon::Render() noexcept
 {
+    return;
     if (!MicroIcon::initStatus)
         return;
 
