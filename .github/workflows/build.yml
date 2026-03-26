@@ -4,13 +4,10 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'master'
-      - 'main'
+      - '*'
   pull_request:
     branches:
       - '*'
-      - '*/*'
-      - '**'
 
 jobs:
   build-windows-release:
@@ -22,13 +19,16 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      # ĐÂY LÀ BƯỚC BẢO HIỂM: Ép máy chủ GitHub phải móc hết ruột cháu chắt về
+      - name: Force Download All Deep Submodules
+        run: git submodule update --init --recursive --force
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
       - name: Install Conan 1.x
-        # ĐÃ SỬA: Ép cài bản Conan 1.x để không bị lỗi tương thích với source cũ
         run: |
           python -m pip install --upgrade pip
           pip install "conan<2.0"
@@ -61,6 +61,10 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      # ĐÂY LÀ BƯỚC BẢO HIỂM (Cho bản Linux)
+      - name: Force Download All Deep Submodules
+        run: git submodule update --init --recursive --force
+
       - name: Install packages
         run: sudo apt-get update && sudo apt-get install g++-multilib -y
 
@@ -70,7 +74,6 @@ jobs:
           python-version: '3.x'
 
       - name: Install Conan 1.x
-        # ĐÃ SỬA: Ép cài bản Conan 1.x cho Linux luôn
         run: |
           python -m pip install --upgrade pip
           pip install "conan<2.0"
