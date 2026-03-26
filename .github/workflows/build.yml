@@ -16,12 +16,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           clean: true
-          submodules: recursive
           fetch-depth: 0
 
-      # ĐÂY LÀ BƯỚC BẢO HIỂM: Ép máy chủ GitHub phải móc hết ruột cháu chắt về
-      - name: Force Download All Deep Submodules
-        run: git submodule update --init --recursive --force
+      # BƯỚC "VŨ PHU": Xóa thư mục rỗng và ép tải sống trực tiếp từ server gốc!
+      - name: Force Download All Submodules Manually
+        shell: bash
+        run: |
+          rm -rf lib/omp-sdk
+          git clone --recursive https://github.com/openmultiplayer/open.mp-sdk.git lib/omp-sdk
+          rm -rf lib/omp-net
+          git clone --recursive https://github.com/openmultiplayer/open.mp-network.git lib/omp-net
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -58,12 +62,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           clean: true
-          submodules: recursive
           fetch-depth: 0
 
-      # ĐÂY LÀ BƯỚC BẢO HIỂM (Cho bản Linux)
-      - name: Force Download All Deep Submodules
-        run: git submodule update --init --recursive --force
+      # BƯỚC "VŨ PHU" CHO LINUX
+      - name: Force Download All Submodules Manually
+        shell: bash
+        run: |
+          rm -rf lib/omp-sdk
+          git clone --recursive https://github.com/openmultiplayer/open.mp-sdk.git lib/omp-sdk
+          rm -rf lib/omp-net
+          git clone --recursive https://github.com/openmultiplayer/open.mp-network.git lib/omp-net
 
       - name: Install packages
         run: sudo apt-get update && sudo apt-get install g++-multilib -y
