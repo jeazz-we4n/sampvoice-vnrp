@@ -36,19 +36,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install "conan<2.0"
 
-      # BƯỚC PHÉP THUẬT: Tải DirectX SDK 2010 để ép nó build Client!
+      # --- BƯỚC PHÉP THUẬT V2: DÙNG POWERSHELL ĐỂ SET ĐƯỜNG DẪN WINDOWS CHUẨN ---
       - name: Setup DirectX SDK
-        shell: bash
         run: |
           git clone https://github.com/testing-laboratory/DirectX-SDK-June2010.git dxsdk
-          DX_PATH=$(pwd -W)/dxsdk/
-          echo "DXSDK_DIR=$DX_PATH" >> $GITHUB_ENV
+          $DxPath = Join-Path (Get-Location) "dxsdk"
+          echo "DXSDK_DIR=$DxPath\" >> $env:GITHUB_ENV
 
       - name: Generate build files
+        # --- Ép thẳng biến môi trường vào mặt CMake ---
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release .. -A Win32
+          cmake -DCMAKE_BUILD_TYPE=Release -DDXSDK_DIR="$env:DXSDK_DIR" .. -A Win32
           
       - name: Build Project
         run: |
@@ -59,6 +59,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sampvoice-win-release
+          # Gom tất cả .dll và .asi ở mọi ngóc ngách
           path: |
             build/**/*.dll
             build/**/*.asi
