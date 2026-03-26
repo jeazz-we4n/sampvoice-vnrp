@@ -46,7 +46,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release .. -A Win32
+          cmake -DCMAKE_BUILD_TYPE=Release -DDXSDK_DIR="$env:DXSDK_DIR" -DBUILD_CLIENT=ON .. -A Win32
           
       - name: Build Project
         run: |
