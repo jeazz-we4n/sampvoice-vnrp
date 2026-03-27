@@ -387,27 +387,33 @@ cell AMX_NATIVE_CALL Pawn::n_SvCreateGStream(AMX* const amx, cell* const params)
 	return reinterpret_cast<cell>(result);
 }
 
-// Hàm xử lý khi scripter gọi SvSetStreamRadioEffect trong PAWN
-cell AMX_NATIVE_CALL Pawn::SvSetStreamRadioEffect(AMX* amx, cell* params)
+cell AMX_NATIVE_CALL Pawn::n_SvSetStreamRadioEffect(AMX* amx, cell* params)
 {
-    // params[1] = (SV_STREAM) con trỏ stream
-    // params[2] = (bool) trạng thái bật/tắt
-
-    // Nếu truyền vào ID stream rỗng (NULL) thì bỏ qua
+    // params[1] = stream con trỏ
+    // params[2] = enable trạng thái
     if (params[1] == NULL) return 0;
 
-    // Trong SampVoice, ID stream truyền từ PAWN lên thực chất là địa chỉ bộ nhớ (pointer)
     auto stream = reinterpret_cast<Stream*>(params[1]);
     bool enable = static_cast<bool>(params[2]);
 
-    // Đóng gói dữ liệu chuẩn bị gửi đi
-    RadioEffectPacket packet;
-    packet.stream = static_cast<DWORD>(params[1]); // ID luồng gửi cho client khớp với ID này
-    packet.enable = enable;
+    // Phiên bản này yêu cầu gộp Header (ID, Kích thước) và Data vào chung 1 khối
+    #pragma pack(push, 1)
+    struct {
+        uint16_t packet;  // Khai báo ID gói tin (Header)
+        uint16_t length;  // Khai báo độ dài dữ liệu (Header)
+        DWORD streamId;   // Dữ liệu: ID luồng (Data)
+        bool enable;      // Dữ liệu: Trạng thái (Data)
+    } rawPacket;
+    #pragma pack(pop)
 
-    // Yêu cầu Stream gửi gói tin Control xuống tất cả các Client đang kết nối/lắng nghe
-    // (Phương thức SendControlPacket thường có sẵn trong class Stream của tác giả CyberMor)
-    stream->SendControlPacket(SV_CONTROL_STREAM_SET_RADIO, &packet, sizeof(packet));
+    // Gán giá trị vào gói tin
+    rawPacket.packet = SV_CONTROL_STREAM_SET_RADIO; // Mã 200 đã định nghĩa
+    rawPacket.length = sizeof(DWORD) + sizeof(bool); // Kích thước phần Data
+    rawPacket.streamId = static_cast<DWORD>(params[1]);
+    rawPacket.enable = enable;
+
+    // Ép kiểu gói tin của chúng ta về chuẩn ControlPacket của server và gửi đi
+    stream->SendControlPacket(reinterpret_cast<ControlPacket&>(rawPacket));
 
     return 1;
 }
